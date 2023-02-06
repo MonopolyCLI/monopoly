@@ -3,7 +3,8 @@
     "prelint:watch": "npm run lint",
     "lint:watch": "onchange repos.json 'src/**/*' -- prettier --write -u {{file}}",
     "lint": "prettier --write -u 'src/**/*' repos.json",
-    "init": "node src/index clone"
+    "init": "node src clone && node src install",
+    "status": "node src status"
   },
   "devDependencies": {
     "chalk": "^4",

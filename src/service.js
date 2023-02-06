@@ -7,7 +7,19 @@ const pexec = promisify(exec);
 const StdBuff = require("./stdbuff");
 
 const DIRNAME = path.join(__dirname, "..", "repos");
-const colors = ["red", "yellow", "green", "blue", "magenta", "cyan", "white"];
+const colors = [
+  "red",
+  "yellow",
+  "green",
+  "blue",
+  "magenta",
+  "cyan",
+  "white",
+  "yellowBright",
+  "blueBright",
+  "magentaBright",
+  "cyanBright",
+];
 let colorDistributor = 0;
 
 class Service {
@@ -24,7 +36,7 @@ class Service {
     const proc = await pexec("git status --porcelain", {
       cwd: this.dir,
     });
-    return proc.stdout;
+    return proc.stdout.trim();
   }
   // Report out the current status of this service
   async status() {
@@ -60,9 +72,13 @@ class Service {
   // Setup dependencies
   async install() {
     this.stdout("npm install");
-    await this.command("npm", ["install", "--no-progress --log-level=warn"], {
-      cwd: this.dir,
-    });
+    await this.command(
+      "npm",
+      ["install", "--no-progress", "--log-level=warn"],
+      {
+        cwd: this.dir,
+      }
+    );
     this.stdout("npm install done");
   }
   async command(cmd, args, opts) {
@@ -97,6 +113,7 @@ class Service {
     const line = msg
       .split("\n")
       .map((v) => v.trim())
+      .filter((v) => v !== "")
       .map((v) => `${chalk[this.color].bold("[" + this.name + "]")} ${v}`)
       .join("\n")
       .trim();

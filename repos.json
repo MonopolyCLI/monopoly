@@ -1,5 +1,26 @@
 {
   "api-polybit-com": {
     "url": "git@github.com:poly/api-polybit-com.git"
+  },
+  "f-stdlib-com": {
+    "url": "git@github.com:poly/f-stdlib-com.git"
+  },
+  "events-stdlib-com": {
+    "url": "git@github.com:poly/events-stdlib-com.git"
+  },
+  "events-scheduler-stdlib-com": {
+    "url": "git@github.com:poly/events-scheduler-stdlib-com.git"
+  },
+  "cache-stdlib-com": {
+    "url": "git@github.com:poly/cache-stdlib-com.git"
+  },
+  "registry-stdlib-com": {
+    "url": "git@github.com:poly/registry-stdlib-com.git"
+  },
+  "npm-lambda-stdlib-com": {
+    "url": "git@github.com:poly/npm-lambda-stdlib-com.git"
+  },
+  "query-cache-stdlib-com": {
+    "url": "git@github.com:poly/query-cache-stdlib-com.git"
   }
 }
