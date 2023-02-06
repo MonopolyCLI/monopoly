@@ -4,6 +4,7 @@ const path = require("path");
 const chalk = require("chalk");
 const fs = require("fs/promises");
 const pexec = promisify(exec);
+const StdBuff = require("./stdbuff");
 
 const DIRNAME = path.join(__dirname, "..", "repos");
 const colors = ["red", "yellow", "green", "blue", "magenta", "cyan", "white"];
@@ -52,62 +53,38 @@ class Service {
       return;
     }
     await fs.mkdir(DIRNAME, { recursive: true });
-    await new Promise((resolve, reject) => {
-      const clone = spawn("git", ["clone", "--verbose", this.url, this.dir]);
-      let exit = false;
-      clone.stdout.on("data", (data) => {
-        this.stdout(data.toString());
-      });
-      clone.stderr.on("data", (data) => {
-        this.stdout(data.toString());
-      });
-      clone.on("error", () => {
-        if (exit) {
-          return;
-        }
-        exit = true;
-        reject();
-      });
-      clone.on("exit", (code) => {
-        if (exit) {
-          return;
-        }
-        exit = true;
-        if (code === 0) {
-          this.stdout("Done!");
-          resolve();
-        } else {
-          reject();
-        }
-      });
-    });
+    this.stdout("git clone");
+    await this.command("git", ["clone", "--verbose", this.url, this.dir]);
+    this.stdout("git clone done");
   }
-  async npm() {
+  // Setup dependencies
+  async install() {
+    this.stdout("npm install");
+    await this.command("npm", ["install", "--no-progress --log-level=warn"], {
+      cwd: this.dir,
+    });
+    this.stdout("npm install done");
+  }
+  async command(cmd, args, opts) {
     await new Promise((resolve, reject) => {
-      const clone = spawn("npm", ["install"], {
-        cwd: this.dir,
-      });
+      const child = spawn(cmd, args, opts);
       let exit = false;
-      clone.stdout.on("data", (data) => {
-        this.stdout(data.toString());
-      });
-      clone.stderr.on("data", (data) => {
-        this.stdout(data.toString());
-      });
-      clone.on("error", () => {
+      const buff = new StdBuff(child.stdout, child.stderr);
+      buff.on("stdout", (line) => this.stdout(line));
+      buff.on("stderr", (line) => this.stdout(line));
+      child.on("error", () => {
         if (exit) {
           return;
         }
         exit = true;
         reject();
       });
-      clone.on("exit", (code) => {
+      child.on("exit", (code) => {
         if (exit) {
           return;
         }
         exit = true;
         if (code === 0) {
-          this.stdout("Done!");
           resolve();
         } else {
           reject();
@@ -119,10 +96,10 @@ class Service {
   stdout(msg) {
     const line = msg
       .split("\n")
-      .filter((v) => v !== "")
       .map((v) => v.trim())
       .map((v) => `${chalk[this.color].bold("[" + this.name + "]")} ${v}`)
-      .join("\n");
+      .join("\n")
+      .trim();
     console.log(line);
   }
 }

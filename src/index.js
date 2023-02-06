@@ -15,12 +15,21 @@ class CLI {
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
+  async install() {
+    const installs = services.map((service) => service.install());
+    const results = await Promise.allSettled(installs);
+    this.done(results, "Have All Dependencies", "Install Failed");
+  }
   async status() {
     const clones = services.map((service) => service.status());
     await Promise.allSettled(clones);
   }
   done(results, success, error) {
-    if (results.filter((promise) => promise.status === "rejected").length > 0) {
+    const rejected = results.filter((promise) => promise.status === "rejected");
+    if (rejected.length > 0) {
+      rejected
+        .filter((promise) => promise.reason)
+        .forEach((promise) => this.error(promise.reason));
       this.error(error);
       process.exit(1);
     } else {
@@ -55,6 +64,8 @@ async function main() {
       return cli.clone();
     case "status":
       return cli.status();
+    case "install":
+      return cli.install();
     default:
       return console.log(help.toString().split("\n").slice(2, -2).join("\n"));
   }
