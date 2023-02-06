@@ -49,6 +49,7 @@ function help() {
   monopoly - autocode's internal polyrepo orchestrator
 
     clone    makes sure all repositories are cloned
+    install  install node modules for all projects
     status   reports the git status of each repository
   */
 }

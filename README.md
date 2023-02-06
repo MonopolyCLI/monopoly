@@ -10,6 +10,7 @@ pattern as the other services.
 This tool currently automates these tasks across all tracked services:
 
 * Cloning repositories from git
+* Installing node modules from package.json
 * Checking git status across all repositories
 
 To get started:
