@@ -41,11 +41,11 @@ class Service {
   // Report out the current status of this service
   async status() {
     if (!(await this.exists())) {
-      return console.log(chalk.redBright(`${this.name} missing`));
+      this.stdout(chalk.redBright(`${this.name} MISSING!`));
     }
     const dirty = await this.dirty();
     if (!dirty) {
-      console.log(chalk.greenBright.bold(`${this.name} is clean`));
+      this.stdout(chalk.greenBright("clean"));
     } else {
       this.stdout(dirty);
     }
