@@ -35,7 +35,6 @@ class SecretStore {
   // Returns a map of key/value pairs for all secrets stored locally
   // Returns null if there is no file
   async local() {
-    console.log(this.file);
     try {
       const local = await fs.readFile(this.file, "utf-8");
       const lines = local.split("\n").filter((line) => line !== "");
