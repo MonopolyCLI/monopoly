@@ -1,26 +1,34 @@
 {
   "api-polybit-com": {
-    "url": "git@github.com:poly/api-polybit-com.git"
+    "repo": "git@github.com:poly/api-polybit-com.git",
+    "target": "staging"
   },
   "f-stdlib-com": {
-    "url": "git@github.com:poly/f-stdlib-com.git"
+    "repo": "git@github.com:poly/f-stdlib-com.git",
+    "target": "local"
   },
   "events-stdlib-com": {
-    "url": "git@github.com:poly/events-stdlib-com.git"
+    "repo": "git@github.com:poly/events-stdlib-com.git",
+    "target": "local"
   },
   "events-scheduler-stdlib-com": {
-    "url": "git@github.com:poly/events-scheduler-stdlib-com.git"
+    "repo": "git@github.com:poly/events-scheduler-stdlib-com.git",
+    "target": "local"
   },
   "cache-stdlib-com": {
-    "url": "git@github.com:poly/cache-stdlib-com.git"
+    "repo": "git@github.com:poly/cache-stdlib-com.git",
+    "target": "local"
   },
   "registry-stdlib-com": {
-    "url": "git@github.com:poly/registry-stdlib-com.git"
+    "repo": "git@github.com:poly/registry-stdlib-com.git",
+    "target": "local"
   },
   "npm-lambda-stdlib-com": {
-    "url": "git@github.com:poly/npm-lambda-stdlib-com.git"
+    "repo": "git@github.com:poly/npm-lambda-stdlib-com.git",
+    "target": "local"
   },
   "query-cache-stdlib-com": {
-    "url": "git@github.com:poly/query-cache-stdlib-com.git"
+    "repo": "git@github.com:poly/query-cache-stdlib-com.git",
+    "target": "local"
   }
 }

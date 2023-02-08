@@ -4,7 +4,7 @@ const chalk = require("chalk");
 
 // Take the repo definitions and turn them into Service objects
 const services = Object.keys(repos).map((name) => {
-  return new Service(name, repos[name].url);
+  return new Service(name, repos[name].repo);
 });
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper

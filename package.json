@@ -7,6 +7,7 @@
     "status": "node src status"
   },
   "devDependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.266.1",
     "chalk": "^4",
     "onchange": "^7.1.0",
     "prettier": "^2.8.1"
