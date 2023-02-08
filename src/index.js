@@ -1,10 +1,11 @@
 const Service = require("./service");
 const chalk = require("chalk");
+const prompts = require("prompts");
 
 // Take the repo definitions and turn them into Service objects
 const serviceFile = require("../services.json");
 const services = Object.keys(serviceFile).map((name) => {
-  return new Service(name, serviceFile[name].repo, target);
+  return new Service(name, serviceFile[name].repo, "local");
 });
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
@@ -23,6 +24,41 @@ class CLI {
   async status() {
     const clones = services.map((service) => service.status());
     await Promise.allSettled(clones);
+  }
+  async secretsSync() {
+    for (let i = 0; i < services.length; i++) {
+      const service = services[i];
+      const diff = await service.secrets.diff();
+      if (!diff) {
+        console.log(chalk.greenBright.bold(`${service.name} is in sync`));
+        continue;
+      }
+      const keys = Object.keys(diff);
+      console.log(chalk.redBright.bold(`${service.name} is out of sync`));
+      for (let j = 0; j < keys.length; j++) {
+        let key = keys[j];
+        let state = diff[key];
+        if (state === "modified") {
+          console.log(chalk.green(key), "has been modified");
+        } else {
+          console.log(chalk.green(key), `is only ${state}`);
+        }
+      }
+      const { action } = await prompts({
+        type: "select",
+        name: "action",
+        message: "How should we resolve this?",
+        choices: [
+          { title: "Replace remote copy with local copy", value: "upload" },
+          { title: "Replace local copy with remote copy", value: "download" },
+        ],
+      });
+      if (!action) {
+        console.log(chalk.yellow.bold("WARN: Taking no action"));
+        continue;
+      }
+      await service.secrets.upload();
+    }
   }
   done(results, success, error) {
     const rejected = results.filter((promise) => promise.status === "rejected");
@@ -67,6 +103,12 @@ async function main() {
       return cli.status();
     case "install":
       return cli.install();
+    case "secrets":
+      const subcommand = args[0];
+      switch (subcommand) {
+        case "sync":
+          return cli.secretsSync();
+      }
     default:
       return console.log(help.toString().split("\n").slice(2, -2).join("\n"));
   }

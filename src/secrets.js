@@ -4,6 +4,8 @@ const path = require("path");
 const fs = require("fs/promises");
 const {
   SecretsManagerClient,
+  CreateSecretCommand,
+  PutSecretValueCommand,
   GetSecretValueCommand,
 } = require("@aws-sdk/client-secrets-manager");
 
@@ -33,14 +35,14 @@ class SecretStore {
   // }
   // Will return null if there is no difference
   async diff() {
-    const local = await this.local();
-    const remote = await this.remote();
+    const local = (await this.local()) || {};
+    const remote = (await this.remote()) || {};
     const result = {};
     const localVars = Object.keys(local);
     const remoteVars = Object.keys(remote);
     for (let i = 0; i < localVars.length; i++) {
       let varname = localVars[i];
-      if (!remote[varname]) {
+      if (remote[varname] === undefined) {
         result[varname] = "local";
       } else if (remote[varname] !== local[varname]) {
         result[varname] = "modified";
@@ -48,11 +50,14 @@ class SecretStore {
     }
     for (let i = 0; i < remoteVars.length; i++) {
       let varname = remoteVars[i];
-      if (!local[varname]) {
+      if (local[varname] === undefined) {
         result[varname] = "remote";
       } else if (local[varname] !== remote[varname]) {
         result[varname] = "modified";
       }
+    }
+    if (Object.keys(result).length === 0) {
+      return null;
     }
     return result;
   }
@@ -97,6 +102,7 @@ class SecretStore {
       );
       const result = JSON.parse(response.SecretString);
       this.cache.remote = result;
+      return result;
     } catch (e) {
       return null;
     }
@@ -104,7 +110,35 @@ class SecretStore {
   // Fetch the remote key/value pairs from the bucket and save them locally
   async download() {}
   // Take the local copy and save it to the bucket
-  async upload() {}
+  async upload() {
+    const local = await this.local();
+    if (!local) {
+      throw new Error(`Missing ${this.file}`);
+    }
+    // Determine if we are updating or creating a secret
+    const remote = await this.remote();
+    // Do a diff and short circuit
+    const diff = await this.diff();
+    if (!diff) {
+      return;
+    }
+    if (remote) {
+      await client.send(
+        new PutSecretValueCommand({
+          SecretId: this.bucket,
+          SecretString: JSON.stringify(local),
+        })
+      );
+    } else {
+      await client.send(
+        new CreateSecretCommand({
+          Name: this.bucket,
+          SecretString: JSON.stringify(local),
+        })
+      );
+    }
+    this.cache.remote = local;
+  }
   // Returns a map of key/value pairs for all secrets merged with the env vars defined
   // in services.json.
   // It only uses local copies and will throw an error if the local file is missing
@@ -136,3 +170,4 @@ class SecretStore {
     return result;
   }
 }
+module.exports = SecretStore;

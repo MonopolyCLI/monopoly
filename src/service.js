@@ -5,6 +5,7 @@ const chalk = require("chalk");
 const fs = require("fs/promises");
 const pexec = promisify(exec);
 const StdBuff = require("./stdbuff");
+const SecretStore = require("./secrets");
 
 const DIRNAME = path.join(__dirname, "..", "repos");
 const colors = [
@@ -29,6 +30,7 @@ class Service {
     this.target = target;
     this.color = colors[colorDistributor++];
     this.dir = path.join(DIRNAME, this.name);
+    this.secrets = new SecretStore(this.name, this.target);
   }
   // Check if a git repository is dirty.
   // If this function returns "" it is clean.
