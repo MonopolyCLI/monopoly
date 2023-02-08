@@ -1,8 +1,8 @@
 {
   "scripts": {
     "prelint:watch": "npm run lint",
-    "lint:watch": "onchange repos.json 'src/**/*' -- prettier --write -u {{file}}",
-    "lint": "prettier --write -u 'src/**/*' repos.json",
+    "lint:watch": "onchange services.json targets.json 'src/**/*' -- prettier --write -u {{file}}",
+    "lint": "prettier --write -u 'src/**/*' services.json targets.json",
     "init": "node src clone && node src install",
     "status": "node src status"
   },

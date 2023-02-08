@@ -1,10 +1,10 @@
 const Service = require("./service");
-const repos = require("../repos.json");
 const chalk = require("chalk");
 
 // Take the repo definitions and turn them into Service objects
-const services = Object.keys(repos).map((name) => {
-  return new Service(name, repos[name].repo);
+const serviceFile = require("../services.json");
+const services = Object.keys(serviceFile).map((name) => {
+  return new Service(name, serviceFile[name].repo, target);
 });
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper

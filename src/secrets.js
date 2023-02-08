@@ -1,4 +1,5 @@
-const repos = require("../repos");
+const services = require("../services.json");
+const targets = require("../targets.json");
 const path = require("path");
 const fs = require("fs/promises");
 const {
@@ -68,7 +69,7 @@ class SecretStore {
   // Take the local copy and save it to the bucket
   async upload() {}
   // Returns a map of key/value pairs for all secrets merged with the env vars defined
-  // in repos.json.
+  // in services.json.
   // It only uses local copies and will throw an error if the local file is missing
   async vars() {
     const local = await this.local();
@@ -76,20 +77,22 @@ class SecretStore {
       throw new Error("Missing local file");
     }
     let result = { ...local };
-    const projects = Object.keys(repos);
-    for (let i = 0; i < projects.length; i++) {
-      const name = projects[i];
-      const project = repos[name];
-      const target = project.target;
+    const names = Object.keys(services);
+    for (let i = 0; i < names.length; i++) {
+      const name = names[i];
+      const service = services[name];
+      const target = service.target;
       if (!target) {
-        throw new Error(`No target set for ${name}`);
+        throw new Error(`No target set for ${name} in services.json`);
       }
-      if (!project.environments) {
-        throw new Error(`Missing environments for ${name}`);
+      if (!targets[name]) {
+        throw new Error(`Missing ${name} in targets.json`);
       }
-      const vars = project.environments[target];
+      const vars = targets[name][target];
       if (!vars) {
-        throw new Error(`Target ${target} missing from ${name}`);
+        throw new Error(
+          `Target ${target} missing from ${name} in targets.json`
+        );
       }
       result = { ...result, ...vars };
     }

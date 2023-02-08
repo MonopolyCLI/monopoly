@@ -23,9 +23,10 @@ const colors = [
 let colorDistributor = 0;
 
 class Service {
-  constructor(name, url) {
+  constructor(name, url, target) {
     this.url = url;
     this.name = name;
+    this.target = target;
     this.color = colors[colorDistributor++];
     this.dir = path.join(DIRNAME, this.name);
   }
