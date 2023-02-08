@@ -19,6 +19,10 @@ class SecretStore {
     this.env = env;
     this.file = path.join(envvars, service, `.${env}.env`);
     this.bucket = `${service}/${env}`;
+    this.cache = {
+      remote: undefined,
+      local: undefined,
+    };
   }
   // Returns a map of keys that are out of sync between the remote and local files
   // i.e.:
@@ -28,13 +32,42 @@ class SecretStore {
   //    "buzz": "modified", # Is both local and remote but the values don't match
   // }
   // Will return null if there is no difference
-  async stale() {
+  async diff() {
     const local = await this.local();
     const remote = await this.remote();
+    const result = {};
+    const localVars = Object.keys(local);
+    const remoteVars = Object.keys(remote);
+    for (let i = 0; i < localVars.length; i++) {
+      let varname = localVars[i];
+      if (!remote[varname]) {
+        result[varname] = "local";
+      } else if (remote[varname] !== local[varname]) {
+        result[varname] = "modified";
+      }
+    }
+    for (let i = 0; i < remoteVars.length; i++) {
+      let varname = remoteVars[i];
+      if (!local[varname]) {
+        result[varname] = "remote";
+      } else if (local[varname] !== remote[varname]) {
+        result[varname] = "modified";
+      }
+    }
+    return result;
+  }
+  async hasLocal() {
+    return (await this.local()) !== null;
+  }
+  async hasRemote() {
+    return (await this.remote()) !== null;
   }
   // Returns a map of key/value pairs for all secrets stored locally
   // Returns null if there is no file
   async local() {
+    if (this.cache.local) {
+      return this.cache.local;
+    }
     try {
       const local = await fs.readFile(this.file, "utf-8");
       const lines = local.split("\n").filter((line) => line !== "");
@@ -46,6 +79,7 @@ class SecretStore {
         const val = parts[1];
         result[key] = val;
       }
+      this.cache.local = result;
       return result;
     } catch (e) {
       return null;
@@ -54,11 +88,15 @@ class SecretStore {
   // Returns a map of key/value pairs for all secrets in the bucket
   // Returns null if there is no bucket
   async remote() {
+    if (this.cache.remote) {
+      return this.cache.remote;
+    }
     try {
       let response = await client.send(
         new GetSecretValueCommand({ SecretId: this.bucket })
       );
-      return JSON.parse(response.SecretString);
+      const result = JSON.parse(response.SecretString);
+      this.cache.remote = result;
     } catch (e) {
       return null;
     }
