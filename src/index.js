@@ -4,30 +4,36 @@ const prompts = require("prompts");
 
 // Take the repo definitions and turn them into Service objects
 const serviceFile = require("../services.json");
-const services = Object.keys(serviceFile).map((name) => {
+const local = Object.keys(serviceFile).map((name) => {
   return new Service(name, serviceFile[name].repo, "local");
+});
+const staging = Object.keys(serviceFile).map((name) => {
+  return new Service(name, serviceFile[name].repo, "staging");
+});
+const prod = Object.keys(serviceFile).map((name) => {
+  return new Service(name, serviceFile[name].repo, "prod");
 });
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
 // around the Service object that handles batching commands.
 class CLI {
   async clone() {
-    const clones = services.map((service) => service.clone());
+    const clones = local.map((service) => service.clone());
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
   async install() {
-    const installs = services.map((service) => service.install());
+    const installs = local.map((service) => service.install());
     const results = await Promise.allSettled(installs);
     this.done(results, "Have All Dependencies", "Install Failed");
   }
   async status() {
-    const clones = services.map((service) => service.status());
+    const clones = local.map((service) => service.status());
     await Promise.allSettled(clones);
   }
   async secretsSync() {
-    for (let i = 0; i < services.length; i++) {
-      const service = services[i];
+    for (let i = 0; i < local.length; i++) {
+      const service = local[i];
       const diff = await service.secrets.diff();
       if (!diff) {
         console.log(chalk.greenBright.bold(`${service.name} is in sync`));
@@ -57,7 +63,11 @@ class CLI {
         console.log(chalk.yellow.bold("WARN: Taking no action"));
         continue;
       }
-      await service.secrets.upload();
+      if (action === "upload") {
+        await service.secrets.upload();
+      } else {
+        await service.secrets.download();
+      }
     }
   }
   done(results, success, error) {
@@ -87,6 +97,8 @@ function help() {
     clone    makes sure all repositories are cloned
     install  install node modules for all projects
     status   reports the git status of each repository
+    secrets
+      sync   
   */
 }
 
