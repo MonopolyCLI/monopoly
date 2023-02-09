@@ -8,27 +8,25 @@ const StdBuff = require("./stdbuff");
 const SecretStore = require("./secrets");
 
 const DIRNAME = path.join(__dirname, "..", "repos");
-const colors = [
-  "red",
-  "yellow",
-  "green",
-  "blue",
-  "magenta",
-  "cyan",
-  "white",
-  "yellowBright",
-  "blueBright",
-  "magentaBright",
-  "cyanBright",
-];
-let colorDistributor = 0;
+var stringToColor = function (str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  var color = "#";
+  for (var i = 0; i < 3; i++) {
+    var value = (hash >> (i * 8)) & 0xff;
+    color += ("00" + value.toString(16)).substr(-2);
+  }
+  return color;
+};
 
 class Service {
   constructor(name, url, target) {
     this.url = url;
     this.name = name;
     this.target = target;
-    this.color = colors[colorDistributor++];
+    this.color = stringToColor(this.name);
     this.dir = path.join(DIRNAME, this.name);
     this.secrets = new SecretStore(this.name, this.target);
   }
@@ -113,14 +111,35 @@ class Service {
   }
   // Write a message to stdout prefixed by the service's name
   stdout(msg) {
+    if (msg.trim() === "") {
+      return;
+    }
+    const line = msg
+      .split("\n") // Split around newline
+      .filter((v) => v.trim() !== "") // Remove empty lines
+      .map((v) => `${chalk.hex(this.color).bold("[" + this.name + "]")} ${v}`) // Prefix each line
+      .join("\n"); // Join back into lines
+    console.log(line);
+  }
+  // Write a message to stderr prefixed by the service's name
+  stderr(msg) {
+    // Same as stdout but make output text bold red
+    if (msg.trim() === "") {
+      return;
+    }
     const line = msg
       .split("\n")
       .map((v) => v.trim())
-      .filter((v) => v !== "")
-      .map((v) => `${chalk[this.color].bold("[" + this.name + "]")} ${v}`)
+      .filter((v) => v.trim() !== "")
+      .map(
+        (v) =>
+          `${chalk
+            .hex(this.color)
+            .bold("[" + this.name + "]")} ${chalk.redBright.bold(v)}`
+      )
       .join("\n")
       .trim();
-    console.log(line);
+    console.erro(line);
   }
 }
 module.exports = Service;
