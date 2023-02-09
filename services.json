@@ -1,26 +1,42 @@
 {
+  "autocode-api-log-service": {
+    "repo": "git@github.com:/poly/autocode-api-log-service",
+    "target": "local"
+  },
+  "autocode-tls-proxy": {
+    "repo": "git@github.com:/poly/autocode-tls-proxy",
+    "target": "local"
+  },
   "api-polybit-com": {
     "repo": "git@github.com:poly/api-polybit-com.git",
-    "target": "staging"
-  },
-  "f-stdlib-com": {
-    "repo": "git@github.com:poly/f-stdlib-com.git",
-    "target": "local"
-  },
-  "events-stdlib-com": {
-    "repo": "git@github.com:poly/events-stdlib-com.git",
-    "target": "local"
-  },
-  "events-scheduler-stdlib-com": {
-    "repo": "git@github.com:poly/events-scheduler-stdlib-com.git",
     "target": "local"
   },
   "cache-stdlib-com": {
     "repo": "git@github.com:poly/cache-stdlib-com.git",
     "target": "local"
   },
-  "registry-stdlib-com": {
-    "repo": "git@github.com:poly/registry-stdlib-com.git",
+  "cert-provisioning-worker": {
+    "repo": "git@github.com:/poly/cert-provisioning-worker",
+    "target": "local"
+  },
+  "discord-voice-clients-stdlib-com": {
+    "repo": "git@github.com:/poly/discord-voice-clients-stdlib-com",
+    "target": "local"
+  },
+  "discord-voice-coordinator-stdlib-com": {
+    "repo": "git@github.com:/poly/discord-voice-coordinator-stdlib-com",
+    "target": "local"
+  },
+  "events-scheduler-stdlib-com": {
+    "repo": "git@github.com:poly/events-scheduler-stdlib-com.git",
+    "target": "local"
+  },
+  "events-stdlib-com": {
+    "repo": "git@github.com:poly/events-stdlib-com.git",
+    "target": "local"
+  },
+  "f-stdlib-com": {
+    "repo": "git@github.com:poly/f-stdlib-com.git",
     "target": "local"
   },
   "npm-lambda-stdlib-com": {
@@ -29,6 +45,18 @@
   },
   "query-cache-stdlib-com": {
     "repo": "git@github.com:poly/query-cache-stdlib-com.git",
+    "target": "local"
+  },
+  "websocket-dispatcher-client-stdlib-com": {
+    "repo": "git@github.com:poly/websocket-dispatcher-client-stdlib-com",
+    "target": "local"
+  },
+  "websocket-dispatcher-coordinator-stdlib-com": {
+    "repo": "git@github.com:poly/websocket-dispatcher-coordinator-stdlib-com",
+    "target": "local"
+  },
+  "registry-stdlib-com": {
+    "repo": "git@github.com:poly/registry-stdlib-com.git",
     "target": "local"
   }
 }
