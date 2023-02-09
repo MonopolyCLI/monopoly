@@ -165,9 +165,16 @@ class SecretStore {
           `Target ${target} missing from ${name} in targets.json`
         );
       }
-      result = { ...result, ...vars };
+      const overrides = Object.keys(vars);
+      for (let j = 0; j < overrides.length; j++) {
+        const override = overrides[i];
+        if (result[override]) {
+          result[override] = vars[override];
+        }
+      }
     }
     return result;
   }
 }
+
 module.exports = SecretStore;
