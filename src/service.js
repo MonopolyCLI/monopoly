@@ -70,6 +70,12 @@ class Service {
     await this.command("git", ["clone", "--verbose", this.url, this.dir]);
     this.stdout("git clone done");
   }
+  async dev() {
+    this.stdout("npm run dev");
+    await this.command("npm", ["run", "dev"], {
+      cwd: this.dir,
+    });
+  }
   // Setup dependencies
   async install() {
     this.stdout("npm install");
@@ -81,6 +87,23 @@ class Service {
       }
     );
     this.stdout("npm install done");
+  }
+  async writeEnv() {
+    this.stdout("generating .env");
+    try {
+      // Fetch our vars object with env overrides
+      const vars = await this.secrets.vars();
+      // Convert it to a env file
+      const file = Object.keys(vars)
+        .map((key) => `${key}=${vars[key]}`)
+        .join("\n");
+      const target = path.join(this.dir, ".env");
+      // Write it to the filesystem
+      await fs.writeFile(target, file, "utf-8");
+    } catch (e) {
+      this.stderr(e.toString());
+      throw e;
+    }
   }
   async command(cmd, args, opts) {
     await new Promise((resolve, reject) => {
@@ -139,7 +162,7 @@ class Service {
       )
       .join("\n")
       .trim();
-    console.erro(line);
+    console.error(line);
   }
 }
 module.exports = Service;

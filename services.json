@@ -1,62 +1,62 @@
 {
   "autocode-api-log-service": {
     "repo": "git@github.com:/poly/autocode-api-log-service",
-    "target": "local"
+    "target": "staging"
   },
   "autocode-tls-proxy": {
     "repo": "git@github.com:/poly/autocode-tls-proxy",
-    "target": "local"
+    "target": "staging"
   },
   "api-polybit-com": {
     "repo": "git@github.com:poly/api-polybit-com.git",
-    "target": "local"
+    "target": "staging"
   },
   "cache-stdlib-com": {
     "repo": "git@github.com:poly/cache-stdlib-com.git",
-    "target": "local"
+    "target": "staging"
   },
   "cert-provisioning-worker": {
     "repo": "git@github.com:/poly/cert-provisioning-worker",
-    "target": "local"
+    "target": "staging"
   },
   "discord-voice-clients-stdlib-com": {
     "repo": "git@github.com:/poly/discord-voice-clients-stdlib-com",
-    "target": "local"
+    "target": "staging"
   },
   "discord-voice-coordinator-stdlib-com": {
     "repo": "git@github.com:/poly/discord-voice-coordinator-stdlib-com",
-    "target": "local"
+    "target": "staging"
   },
   "events-scheduler-stdlib-com": {
     "repo": "git@github.com:poly/events-scheduler-stdlib-com.git",
-    "target": "local"
+    "target": "staging"
   },
   "events-stdlib-com": {
     "repo": "git@github.com:poly/events-stdlib-com.git",
-    "target": "local"
+    "target": "staging"
   },
   "f-stdlib-com": {
     "repo": "git@github.com:poly/f-stdlib-com.git",
-    "target": "local"
+    "target": "staging"
   },
   "npm-lambda-stdlib-com": {
     "repo": "git@github.com:poly/npm-lambda-stdlib-com.git",
-    "target": "local"
+    "target": "staging"
   },
   "query-cache-stdlib-com": {
     "repo": "git@github.com:poly/query-cache-stdlib-com.git",
-    "target": "local"
+    "target": "staging"
   },
   "websocket-dispatcher-client-stdlib-com": {
     "repo": "git@github.com:poly/websocket-dispatcher-client-stdlib-com",
-    "target": "local"
+    "target": "staging"
   },
   "websocket-dispatcher-coordinator-stdlib-com": {
     "repo": "git@github.com:poly/websocket-dispatcher-coordinator-stdlib-com",
-    "target": "local"
+    "target": "staging"
   },
   "registry-stdlib-com": {
     "repo": "git@github.com:poly/registry-stdlib-com.git",
-    "target": "local"
+    "target": "staging"
   }
 }

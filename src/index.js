@@ -22,6 +22,22 @@ class CLI {
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
+  async dev() {
+    // Only run services set to local
+    const enabled = local.filter(
+      (service) => serviceFile[service.name].target === "local"
+    );
+    // Create env files for each local service
+    const envs = enabled.map((service) => service.writeEnv());
+    await Promise.all(envs);
+    // Start the dev server for each service
+    const devs = enabled.map((service) => service.dev());
+    try {
+      const results = await Promise.all(devs);
+    } catch (e) {
+      process.exit(1);
+    }
+  }
   async install() {
     const installs = local.map((service) => service.install());
     const results = await Promise.allSettled(installs);
@@ -123,6 +139,8 @@ async function main() {
       return cli.status();
     case "install":
       return cli.install();
+    case "dev":
+      return cli.dev();
     case "secrets":
       const subcommand = args[0];
       switch (subcommand) {
