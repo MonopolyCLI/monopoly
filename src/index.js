@@ -137,9 +137,9 @@ function help() {
     clone    makes sure all repositories are cloned
     install  install node modules for all projects
     status   reports the git status of each repository
-    dev      start all local services
     secrets
       sync   reconcile local and remote secrets
+    dev      start all local services
 
   Configuration Files:
     ./services.json   Configure the services monopoly manages
