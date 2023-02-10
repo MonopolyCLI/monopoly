@@ -30,6 +30,13 @@ class Service {
     this.dir = path.join(DIRNAME, this.name);
     this.secrets = new SecretStore(this.name, this.target);
   }
+  // Get the branch name
+  async branch() {
+    const proc = await pexec("git symbolic-ref --short HEAD", {
+      cwd: this.dir,
+    });
+    return proc.stdout.trim();
+  }
   // Check if a git repository is dirty.
   // If this function returns "" it is clean.
   // Otherwise it will return the list of dirty files.
@@ -45,9 +52,11 @@ class Service {
       this.stdout(chalk.redBright(`${this.name} MISSING!`));
     }
     const dirty = await this.dirty();
+    const branch = await this.branch();
     if (!dirty) {
-      this.stdout(chalk.greenBright("clean"));
+      this.stdout(chalk.greenBright(`${branch} & clean`));
     } else {
+      this.stdout(chalk.yellowBright(`${branch} & dirty`));
       this.stdout(dirty);
     }
   }
