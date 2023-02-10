@@ -108,7 +108,23 @@ class SecretStore {
     }
   }
   // Fetch the remote key/value pairs from the bucket and save them locally
-  async download() {}
+  async download() {
+    const remote = await this.remote();
+    if (!remote) {
+      throw new Error(`Failed to fetch ${this.bucket}`);
+    }
+    // Do a diff and short circuit
+    const diff = await this.diff();
+    if (!diff) {
+      return;
+    }
+    const file = Object.keys(remote)
+      .map((key) => `${key}=${remote[key]}`)
+      .join("\n");
+    await fs.mkdir(path.dirname(this.file), { recursive: true });
+    await fs.writeFile(this.file, file, "utf-8");
+    this.cache.local = remote;
+  }
   // Take the local copy and save it to the bucket
   async upload() {
     const local = await this.local();
