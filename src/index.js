@@ -64,24 +64,40 @@ class CLI {
         }
         const keys = Object.keys(diff);
         console.log(chalk.redBright.bold(`${service.name} is out of sync`));
+        // If the file is only remote, just download it
+        let bypassPrompt = true;
         for (let k = 0; k < keys.length; k++) {
           let key = keys[k];
           let state = diff[key];
           if (state === "modified") {
+            bypassPrompt = false;
             console.log(chalk.green(key), "has been modified");
-          } else {
+          } else if (state === "local") {
+            bypassPrompt = false;
+            console.log(chalk.green(key), `is only ${state}`);
+          } else if (state === "remote") {
             console.log(chalk.green(key), `is only ${state}`);
           }
         }
-        const { action } = await prompts({
-          type: "select",
-          name: "action",
-          message: "How should we resolve this?",
-          choices: [
-            { title: "Replace remote copy with local copy", value: "upload" },
-            { title: "Replace local copy with remote copy", value: "download" },
-          ],
-        });
+
+        let action;
+        if (bypassPrompt) {
+          action = "download";
+        } else {
+          const input = await prompts({
+            type: "select",
+            name: "action",
+            message: "How should we resolve this?",
+            choices: [
+              { title: "Replace remote copy with local copy", value: "upload" },
+              {
+                title: "Replace local copy with remote copy",
+                value: "download",
+              },
+            ],
+          });
+          action = input.action;
+        }
         if (!action) {
           console.log(chalk.yellow.bold("WARN: Taking no action"));
           continue;
