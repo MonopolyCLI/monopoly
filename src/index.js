@@ -27,8 +27,8 @@ class CLI {
     const enabled = local.filter(
       (service) => serviceFile[service.name].target === "local"
     );
-    if(enabled.length === 0) {
-        console.log(chalk.yellowBright("No services set to local"));
+    if (enabled.length === 0) {
+      console.log(chalk.yellowBright("No services set to local"));
     }
     // Create env files for each local service
     const envs = enabled.map((service) => service.writeEnv());
