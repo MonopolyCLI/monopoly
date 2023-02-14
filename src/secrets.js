@@ -183,7 +183,7 @@ class SecretStore {
       }
       const overrides = Object.keys(vars);
       for (let j = 0; j < overrides.length; j++) {
-        const override = overrides[i];
+        const override = overrides[j];
         if (result[override]) {
           result[override] = vars[override];
         }
