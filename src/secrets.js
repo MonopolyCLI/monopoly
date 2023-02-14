@@ -1,5 +1,11 @@
 const services = require("../services.json");
-const targets = require("../targets.json");
+let target;
+try {
+  targets = require("../targets.json");
+} catch (e) {
+  targets = {};
+}
+
 const path = require("path");
 const fs = require("fs/promises");
 const {
