@@ -167,7 +167,7 @@ class SecretStore {
   async vars() {
     const local = await this.local();
     if (!local) {
-      throw new Error("Missing local file");
+      throw new Error("Missing .local.env file");
     }
     let result = { ...local };
     const names = Object.keys(services);
