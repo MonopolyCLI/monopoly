@@ -1,11 +1,4 @@
 const services = require("../services.json");
-let target;
-try {
-  targets = require("../targets.json");
-} catch (e) {
-  targets = {};
-}
-
 const path = require("path");
 const fs = require("fs/promises");
 const {
@@ -170,6 +163,7 @@ class SecretStore {
       throw new Error("Missing .local.env file");
     }
     let result = { ...local };
+    /*
     const names = Object.keys(services);
     for (let i = 0; i < names.length; i++) {
       const name = names[i];
@@ -195,6 +189,7 @@ class SecretStore {
         }
       }
     }
+    */
     return result;
   }
 }
