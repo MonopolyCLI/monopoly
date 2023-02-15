@@ -1,7 +1,7 @@
 {
   "autocode-api-log-service": {
     "repo": "git@github.com:/poly/autocode-api-log-service",
-    "target": "staging"
+    "target": "local"
   },
   "api-polybit-com": {
     "repo": "git@github.com:poly/api-polybit-com",

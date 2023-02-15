@@ -1,47 +1,50 @@
 const { promisify } = require("util");
 const { exec, spawn } = require("child_process");
 const path = require("path");
-const chalk = require("chalk");
 const fs = require("fs/promises");
 const pexec = promisify(exec);
-const StdBuff = require("./stdbuff");
 const SecretStore = require("./secrets");
+const StdBuff = require("./stdbuff");
 
 const DIRNAME = path.join(__dirname, "..", "repos");
-var stringToColor = function (str) {
-  var hash = 0;
-  for (var i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  var color = "#";
-  for (var i = 0; i < 3; i++) {
-    var value = (hash >> (i * 8)) & 0xff;
-    color += ("00" + value.toString(16)).substr(-2);
-  }
-  return color;
-};
 
-class Service {
-  constructor(name, url) {
-    this.url = url;
+function formatEnvKey(str) {
+  return str.replace(/-/g, "_").toUpperCase();
+}
+
+class Resource {
+  constructor(name, config) {
     this.name = name;
-    this.color = stringToColor(this.name);
+    this.config = config;
+  }
+  configureService() {
+    const config = this.config;
+    const name = this.name;
+    const keys = Object.keys(config);
+    const result = {};
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      const value = config[key];
+      result[formatEnvKey(`${name}_${key}`)] = value;
+    }
+  }
+  configureSelf() {
+    const config = this.config;
+    const keys = Object.keys(config);
+    const result = {};
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      const value = config[key];
+      result[formatEnvKey(`${key}`)] = value;
+    }
+  }
+}
+
+class Repo extends Resource {
+  constructor(name, repo, config) {
+    super(name);
+    this.repo = repo;
     this.dir = path.join(DIRNAME, this.name);
-    this.local = {
-      name: "local",
-      secrets: new SecretStore(this.name, "local"),
-      writeEnv: async () => this._writeEnv(this.local.secrets),
-    };
-    this.staging = {
-      name: "staging",
-      secrets: new SecretStore(this.name, "staging"),
-      writeEnv: async () => this._writeEnv(this.staging.secrets),
-    };
-    this.prod = {
-      name: "prod",
-      secrets: new SecretStore(this.name, "prod"),
-      writeEnv: async () => this._writeEnv(this.prod.secrets),
-    };
   }
   // Get the branch name
   async branch() {
@@ -61,19 +64,10 @@ class Service {
   }
   // Report out the current status of this service
   async status() {
-    if (!(await this.exists())) {
-      this.stdout(chalk.redBright(`${this.name} MISSING!`));
-    }
-    const dirty = await this.dirty();
-    const branch = await this.branch();
-    if (!dirty) {
-      this.stdout(chalk.greenBright(`${branch} & clean`));
-    } else {
-      this.stdout(chalk.yellowBright(`${branch} & dirty`));
-      this.stdout(dirty);
-    }
+    const [branch, dirty] = await Promise.all([this.branch(), this.dirty()]);
+    return { branch, dirty };
   }
-  // Check to see if this service has been clone from git
+  // Check to see if this service has been cloned from git
   async exists() {
     try {
       await fs.stat(this.dir);
@@ -83,35 +77,85 @@ class Service {
     return true;
   }
   // Clone this repository from git
-  async clone() {
-    if (await this.exists()) {
-      return;
-    }
+  async clone(buffer) {
     await fs.mkdir(DIRNAME, { recursive: true });
-    this.stdout("git clone");
-    await this.command("git", ["clone", "--verbose", this.url, this.dir]);
-    this.stdout("git clone done");
+    await this.command(
+      "git",
+      ["clone", "--verbose", this.repo, this.dir],
+      {},
+      buffer
+    );
   }
-  async dev() {
-    this.stdout("npm run dev");
-    await this.command("npm", ["run", "dev"], {
-      cwd: this.dir,
+  // Run a command inside the Repo's directory
+  async command(cmd, args, opts, buffer) {
+    return new Promise((resolve, reject) => {
+      const child = spawn(cmd, args, opts);
+      let exit = false;
+      child.stdout.on("data", (data) => buffer.stdout(data));
+      child.stderr.on("data", (data) => buffer.stderr(data));
+      child.on("error", (e) => {
+        if (exit) {
+          return;
+        }
+        exit = true;
+        reject(e);
+      });
+      child.on("exit", (code) => {
+        if (exit) {
+          return;
+        }
+        exit = true;
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Process returned status code ${code}`));
+        }
+      });
     });
   }
+}
+
+class Service extends Repo {
+  constructor(name, repo, config) {
+    super(name, repo);
+    this.local = {
+      name: "local",
+      secrets: new SecretStore(this.name, "local"),
+      writeEnv: async () => this._writeEnv(this.local.secrets),
+    };
+    this.staging = {
+      name: "staging",
+      secrets: new SecretStore(this.name, "staging"),
+      writeEnv: async () => this._writeEnv(this.staging.secrets),
+    };
+    this.prod = {
+      name: "prod",
+      secrets: new SecretStore(this.name, "prod"),
+      writeEnv: async () => this._writeEnv(this.prod.secrets),
+    };
+  }
+  async dev() {
+    await this.command(
+      "npm",
+      ["run", "dev"],
+      {
+        cwd: this.dir,
+      },
+      new StdBuff()
+    );
+  }
   // Setup dependencies
-  async install() {
-    this.stdout("npm install");
+  async install(buffer) {
     await this.command(
       "npm",
       ["install", "--no-progress", "--log-level=warn"],
       {
         cwd: this.dir,
-      }
+      },
+      buffer
     );
-    this.stdout("npm install done");
   }
   async _writeEnv(env) {
-    this.stdout("generating .env");
     try {
       // Fetch our vars object with env overrides
       const vars = await env.vars();
@@ -123,68 +167,8 @@ class Service {
       // Write it to the filesystem
       await fs.writeFile(target, file, "utf-8");
     } catch (e) {
-      this.stderr(e.toString());
       throw e;
     }
-  }
-  async command(cmd, args, opts) {
-    await new Promise((resolve, reject) => {
-      const child = spawn(cmd, args, opts);
-      let exit = false;
-      const buff = new StdBuff(child.stdout, child.stderr);
-      buff.on("stdout", (line) => this.stdout(line));
-      buff.on("stderr", (line) => this.stdout(line));
-      child.on("error", () => {
-        if (exit) {
-          return;
-        }
-        exit = true;
-        reject();
-      });
-      child.on("exit", (code) => {
-        if (exit) {
-          return;
-        }
-        exit = true;
-        if (code === 0) {
-          resolve();
-        } else {
-          reject();
-        }
-      });
-    });
-  }
-  // Write a message to stdout prefixed by the service's name
-  stdout(msg) {
-    if (msg.trim() === "") {
-      return;
-    }
-    const line = msg
-      .split("\n") // Split around newline
-      .filter((v) => v.trim() !== "") // Remove empty lines
-      .map((v) => `${chalk.hex(this.color).bold("[" + this.name + "]")} ${v}`) // Prefix each line
-      .join("\n"); // Join back into lines
-    console.log(line);
-  }
-  // Write a message to stderr prefixed by the service's name
-  stderr(msg) {
-    // Same as stdout but make output text bold red
-    if (msg.trim() === "") {
-      return;
-    }
-    const line = msg
-      .split("\n")
-      .map((v) => v.trim())
-      .filter((v) => v.trim() !== "")
-      .map(
-        (v) =>
-          `${chalk
-            .hex(this.color)
-            .bold("[" + this.name + "]")} ${chalk.redBright.bold(v)}`
-      )
-      .join("\n")
-      .trim();
-    console.error(line);
   }
 }
 module.exports = Service;

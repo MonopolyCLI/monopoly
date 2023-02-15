@@ -1,25 +1,51 @@
 const Service = require("./service");
 const chalk = require("chalk");
 const prompts = require("prompts");
+const logger = require("./logger");
+const StdBuff = require("./stdbuff");
 
-// Take the repo definitions and turn them into Service objects
-const serviceFile = require("../services.json");
-const services = Object.keys(serviceFile).map((name) => {
-  return new Service(name, serviceFile[name].repo);
+// Load in the resource definitions and instantiate them
+const resourceFile = require("../resources.json");
+const services = Object.keys(resourceFile).map((name) => {
+  const { repo, config } = resourceFile[name];
+  return new Service(name, repo, config);
 });
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
 // around the Service object that handles batching commands.
 class CLI {
   async clone() {
-    const clones = services.map((service) => service.clone());
+    const clone = async (service) => {
+      if (await service.exists()) {
+        return; // Short circuit
+      }
+      logger.log("git clone", service.name);
+      const buffer = new StdBuff();
+      let msg = [];
+      buffer.on("stdout", (line) => msg.push(line));
+      buffer.on("stderr", (line) => msg.push(line));
+      try {
+        await service.clone(buffer);
+        logger.log("git clone finished", service.name);
+      } catch (e) {
+        // Only write logs if something goes wrong
+        buffer.flush();
+        logger.error(e.toString(), service.name);
+        const log = msg.join("\n");
+        if (log.trim() !== "") {
+          logger.error(log, service.name);
+        }
+        throw new Error(`${service.name} could not be clone`);
+      }
+    };
+    const clones = services.map((service) => clone(service));
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
   async dev() {
     // Only run services set to local
     const enabled = services.filter(
-      (service) => serviceFile[service.name].target === "local"
+      (service) => resourceFile[service.name].target === "local"
     );
     if (enabled.length === 0) {
       console.log(chalk.yellowBright("No services set to local"));
@@ -36,13 +62,55 @@ class CLI {
     }
   }
   async install() {
-    const installs = services.map((service) => service.install());
+    const install = async (service) => {
+      logger.log("npm install", service.name);
+      const buffer = new StdBuff();
+      let msg = [];
+      buffer.on("stdout", (line) => msg.push(line));
+      buffer.on("stderr", (line) => msg.push(line));
+      try {
+        await service.install(buffer);
+        logger.log("npm install finished", service.name);
+      } catch (e) {
+        // Only write logs if something goes wrong
+        buffer.flush();
+        logger.error(e.toString(), service.name);
+        const log = msg.join("\n");
+        if (log.trim() !== "") {
+          logger.error(log, service.name);
+        }
+        throw new Error(`${service.name} failed install`);
+      }
+    };
+    const installs = services.map((service) => install(service));
     const results = await Promise.allSettled(installs);
     this.done(results, "Have All Dependencies", "Install Failed");
   }
   async status() {
-    const clones = services.map((service) => service.status());
-    await Promise.allSettled(clones);
+    const checkStatus = async (service) => {
+      const exists = await service.exists();
+      if (!exists) {
+        return logger.error("Missing repository", service.name);
+      }
+      const { branch, dirty } = await service.status();
+      let msg = "";
+      if (branch === "main" || branch === "master") {
+        msg += branch;
+      } else {
+        msg += chalk.yellowBright.bold(branch);
+      }
+      msg += ": ";
+      if (dirty) {
+        msg += chalk.yellowBright.bold("dirty");
+        logger.log(msg, service.name);
+        logger.log(dirty, service.name);
+      } else {
+        msg += "clean";
+        logger.log(msg, service.name);
+      }
+    };
+    const checks = services.map((service) => checkStatus(service));
+    await Promise.all(checks);
   }
   async secretsSync() {
     for (let i = 0; i < services.length; i++) {
@@ -165,6 +233,7 @@ async function main() {
       }
     default:
       return console.log(help.toString().split("\n").slice(2, -2).join("\n"));
+      const { repo, config } = resourceFile[name];
   }
 }
 main();
