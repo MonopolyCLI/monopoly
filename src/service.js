@@ -22,13 +22,26 @@ var stringToColor = function (str) {
 };
 
 class Service {
-  constructor(name, url, target) {
+  constructor(name, url) {
     this.url = url;
     this.name = name;
-    this.target = target;
     this.color = stringToColor(this.name);
     this.dir = path.join(DIRNAME, this.name);
-    this.secrets = new SecretStore(this.name, this.target);
+    this.local = {
+      name: "local",
+      secrets: new SecretStore(this.name, "local"),
+      writeEnv: async () => this._writeEnv(this.local.secrets),
+    };
+    this.staging = {
+      name: "staging",
+      secrets: new SecretStore(this.name, "staging"),
+      writeEnv: async () => this._writeEnv(this.staging.secrets),
+    };
+    this.prod = {
+      name: "prod",
+      secrets: new SecretStore(this.name, "prod"),
+      writeEnv: async () => this._writeEnv(this.prod.secrets),
+    };
   }
   // Get the branch name
   async branch() {
@@ -97,11 +110,11 @@ class Service {
     );
     this.stdout("npm install done");
   }
-  async writeEnv() {
+  async _writeEnv(env) {
     this.stdout("generating .env");
     try {
       // Fetch our vars object with env overrides
-      const vars = await this.secrets.vars();
+      const vars = await env.vars();
       // Convert it to a env file
       const file = Object.keys(vars)
         .map((key) => `${key}=${vars[key]}`)

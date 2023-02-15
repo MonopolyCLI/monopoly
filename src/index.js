@@ -4,34 +4,28 @@ const prompts = require("prompts");
 
 // Take the repo definitions and turn them into Service objects
 const serviceFile = require("../services.json");
-const local = Object.keys(serviceFile).map((name) => {
-  return new Service(name, serviceFile[name].repo, "local");
-});
-const staging = Object.keys(serviceFile).map((name) => {
-  return new Service(name, serviceFile[name].repo, "staging");
-});
-const prod = Object.keys(serviceFile).map((name) => {
-  return new Service(name, serviceFile[name].repo, "prod");
+const services = Object.keys(serviceFile).map((name) => {
+  return new Service(name, serviceFile[name].repo);
 });
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
 // around the Service object that handles batching commands.
 class CLI {
   async clone() {
-    const clones = local.map((service) => service.clone());
+    const clones = services.map((service) => service.clone());
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
   async dev() {
     // Only run services set to local
-    const enabled = local.filter(
+    const enabled = services.filter(
       (service) => serviceFile[service.name].target === "local"
     );
     if (enabled.length === 0) {
       console.log(chalk.yellowBright("No services set to local"));
     }
     // Create env files for each local service
-    const envs = enabled.map((service) => service.writeEnv());
+    const envs = enabled.map((service) => service.local.writeEnv());
     await Promise.all(envs);
     // Start the dev server for each service
     const devs = enabled.map((service) => service.dev());
@@ -42,26 +36,24 @@ class CLI {
     }
   }
   async install() {
-    const installs = local.map((service) => service.install());
+    const installs = services.map((service) => service.install());
     const results = await Promise.allSettled(installs);
     this.done(results, "Have All Dependencies", "Install Failed");
   }
   async status() {
-    const clones = local.map((service) => service.status());
+    const clones = services.map((service) => service.status());
     await Promise.allSettled(clones);
   }
   async secretsSync() {
-    const envs = [local, staging, prod];
-    for (let i = 0; i < envs.length; i++) {
-      const env = envs[i];
-      for (let j = 0; j < env.length; j++) {
-        const service = env[j];
-        const diff = await service.secrets.diff();
+    for (let i = 0; i < services.length; i++) {
+      const service = services[i];
+      const envs = [service.local, service.staging, service.prod];
+      for (let j = 0; j < envs.length; j++) {
+        const env = envs[j];
+        const diff = await env.secrets.diff();
         if (!diff) {
           console.log(
-            chalk.greenBright.bold(
-              `${service.name} ${service.target} is in sync`
-            )
+            chalk.greenBright.bold(`${service.name} ${env.name} is in sync`)
           );
           continue;
         }
@@ -106,9 +98,9 @@ class CLI {
           continue;
         }
         if (action === "upload") {
-          await service.secrets.upload();
+          await env.secrets.upload();
         } else {
-          await service.secrets.download();
+          await env.secrets.download();
         }
       }
     }
