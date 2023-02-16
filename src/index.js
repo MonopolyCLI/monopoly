@@ -3,6 +3,8 @@ const chalk = require("chalk");
 const prompts = require("prompts");
 const logger = require("./logger");
 const StdBuff = require("./stdbuff");
+const fs = require("fs/promises");
+const path = require("path");
 
 // Load in the resource definitions and instantiate them
 const resourceFile = require("../resources.json");
@@ -59,28 +61,70 @@ class CLI {
         throw new Error(`${service.name} could not be clone`);
       }
     };
-    const clones = repos.map((service) => clone(service));
+    const clones = [...repos, ...services].map((service) => clone(service));
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
   async dev() {
-    // Only run services set to local
+    // Ask the user which services they want to run
+    const choices = services.map((service) => ({
+      title: service.name,
+      value: service.name,
+    }));
+    const input = await prompts({
+      type: "multiselect",
+      name: "names",
+      message: "Which services should we start locally?",
+      choices,
+    });
+
+    // Convert their response into an array of services and
+    // abort if we don't have any work
     const enabled = services.filter(
-      (service) => resourceFile[service.name].target === "local"
+      (service) => input.names.indexOf(service.name) !== -1
     );
     if (enabled.length === 0) {
-      console.log(chalk.yellowBright("No services set to local"));
+      console.log(chalk.yellowBright.bold("No services set to local"));
     }
-    // Create env files for each local service
-    const envs = enabled.map((service) => service.local.writeEnv());
+
+    // Inject env vars for locally enabled services
+    let overrides = {};
+    for (let i = 0; i < services.lenght; i++) {
+      overrides = {
+        ...overrides,
+        ...services[i].configureService(),
+      };
+    }
+
+    // Create env files for each local service with injected variables
+    const envs = enabled.map(async (service) => {
+      logger.log("generating .env", service.name);
+      const vars = {
+        ...(await service.local.vars()),
+        ...overrides,
+        ...service.configureSelf(),
+      };
+      const env = [];
+      Object.keys(vars).forEach((key) => env.push(`${key}=${vars[key]}`));
+      const filename = path.join(service.dir, ".env");
+      fs.writeFile(filename, env.join("\n"), "utf-8");
+    });
     await Promise.all(envs);
+
     // Start the dev server for each service
-    const devs = enabled.map((service) => service.dev());
-    try {
-      const results = await Promise.all(devs);
-    } catch (e) {
-      process.exit(1);
-    }
+    const dev = async (service) => {
+      const buffer = new StdBuff();
+      buffer.on("stdout", (line) => logger.log(line, service.name));
+      buffer.on("stderr", (line) => logger.error(line, service.name));
+      try {
+        await service.dev(buffer);
+      } catch (e) {
+        logger.error(e.toString());
+        return process.exit(1);
+      }
+    };
+    const devs = enabled.map((service) => dev(service));
+    await Promise.all(devs);
   }
   async install() {
     const install = async (service) => {
@@ -130,7 +174,9 @@ class CLI {
         logger.log(msg, service.name);
       }
     };
-    const checks = repos.map((service) => checkStatus(service));
+    const checks = [...repos, ...services].map((service) =>
+      checkStatus(service)
+    );
     await Promise.all(checks);
   }
   async secretsSync() {

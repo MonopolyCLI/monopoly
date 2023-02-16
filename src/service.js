@@ -15,7 +15,14 @@ function formatEnvKey(str) {
 class Resource {
   constructor(name, config) {
     this.name = name;
-    this.config = config;
+    this.config = {};
+    Object.keys(config || {}).forEach((key) => {
+      this.config[formatEnvKey(key)] = config[key];
+    });
+
+    // Setup default config values
+    this.config["HOST"] = this.config["HOST"] || "127.0.0.1";
+    this.config["NODE_ENV"] = this.config["NODE_ENV"] || "development";
   }
   configureService() {
     const config = this.config;
@@ -120,30 +127,18 @@ class Repo extends Resource {
 class Service extends Repo {
   constructor(name, repo, config) {
     super(name, repo, config);
-    this.local = {
-      name: "local",
-      secrets: new SecretStore(this.name, "local"),
-      writeEnv: async () => this._writeEnv(this.local.secrets),
-    };
-    this.staging = {
-      name: "staging",
-      secrets: new SecretStore(this.name, "staging"),
-      writeEnv: async () => this._writeEnv(this.staging.secrets),
-    };
-    this.prod = {
-      name: "prod",
-      secrets: new SecretStore(this.name, "prod"),
-      writeEnv: async () => this._writeEnv(this.prod.secrets),
-    };
+    this.local = new SecretStore(this.name, "local");
+    this.staging = new SecretStore(this.name, "staging");
+    this.prod = new SecretStore(this.name, "prod");
   }
-  async dev() {
+  async dev(buffer) {
     await this.command(
       "npm",
       ["run", "dev"],
       {
         cwd: this.dir,
       },
-      new StdBuff()
+      buffer
     );
   }
   // Setup dependencies
@@ -156,21 +151,6 @@ class Service extends Repo {
       },
       buffer
     );
-  }
-  async _writeEnv(env) {
-    try {
-      // Fetch our vars object with env overrides
-      const vars = await env.vars();
-      // Convert it to a env file
-      const file = Object.keys(vars)
-        .map((key) => `${key}=${vars[key]}`)
-        .join("\n");
-      const target = path.join(this.dir, ".env");
-      // Write it to the filesystem
-      await fs.writeFile(target, file, "utf-8");
-    } catch (e) {
-      throw e;
-    }
   }
 }
 

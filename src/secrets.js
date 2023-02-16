@@ -16,6 +16,7 @@ const envvars = path.join(__dirname, "..", "envfiles");
 class SecretStore {
   constructor(service, env) {
     this.service = service;
+    this.name = env;
     this.env = env;
     this.file = path.join(envvars, service, `.${env}.env`);
     this.bucket = `${service}/${env}`;
@@ -153,43 +154,9 @@ class SecretStore {
     }
     this.cache.remote = local;
   }
-  // Returns a map of key/value pairs for all secrets merged with the env vars defined
-  // in services.json.
-  // It only uses local copies and will throw an error if the local file is missing
   async vars() {
     const local = await this.local();
-    if (!local) {
-      throw new Error("Missing .local.env file");
-    }
-    let result = { ...local };
-    /*
-    const names = Object.keys(services);
-    for (let i = 0; i < names.length; i++) {
-      const name = names[i];
-      const service = services[name];
-      const target = service.target;
-      if (!target) {
-        throw new Error(`No target set for ${name} in services.json`);
-      }
-      if (!targets[name]) {
-        throw new Error(`Missing ${name} in targets.json`);
-      }
-      const vars = targets[name][target];
-      if (!vars) {
-        throw new Error(
-          `Target ${target} missing from ${name} in targets.json`
-        );
-      }
-      const overrides = Object.keys(vars);
-      for (let j = 0; j < overrides.length; j++) {
-        const override = overrides[j];
-        if (result[override]) {
-          result[override] = vars[override];
-        }
-      }
-    }
-    */
-    return result;
+    return local || {};
   }
 }
 
