@@ -1,4 +1,4 @@
-const Service = require("./service");
+const { Service, Repo, Resource } = require("./service");
 const chalk = require("chalk");
 const prompts = require("prompts");
 const logger = require("./logger");
@@ -6,10 +6,31 @@ const StdBuff = require("./stdbuff");
 
 // Load in the resource definitions and instantiate them
 const resourceFile = require("../resources.json");
-const services = Object.keys(resourceFile).map((name) => {
-  const { repo, config } = resourceFile[name];
-  return new Service(name, repo, config);
+
+// Resources default to "repo" type
+Object.keys(resourceFile).forEach((name) => {
+  resourceFile[name].type = resourceFile[name].type || "repo";
 });
+
+// Instantiate all resources by type
+const services = Object.keys(resourceFile)
+  .filter((name) => resourceFile[name].type === "service")
+  .map((name) => {
+    const { repo, config } = resourceFile[name];
+    return new Service(name, repo, config || {});
+  });
+const repos = Object.keys(resourceFile)
+  .filter((name) => resourceFile[name].type === "repo")
+  .map((name) => {
+    const { repo, config } = resourceFile[name];
+    return new Repo(name, repo, config || {});
+  });
+const resources = Object.keys(resourceFile)
+  .filter((name) => resourceFile[name].type === "resource")
+  .map((name) => {
+    const { repo, config } = resourceFile[name];
+    return new Resource(name, repo, config || {});
+  });
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
 // around the Service object that handles batching commands.
@@ -38,7 +59,7 @@ class CLI {
         throw new Error(`${service.name} could not be clone`);
       }
     };
-    const clones = services.map((service) => clone(service));
+    const clones = repos.map((service) => clone(service));
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
@@ -109,7 +130,7 @@ class CLI {
         logger.log(msg, service.name);
       }
     };
-    const checks = services.map((service) => checkStatus(service));
+    const checks = repos.map((service) => checkStatus(service));
     await Promise.all(checks);
   }
   async secretsSync() {
@@ -126,7 +147,9 @@ class CLI {
           continue;
         }
         const keys = Object.keys(diff);
-        console.log(chalk.redBright.bold(`${service.name} is out of sync`));
+        console.log(
+          chalk.redBright.bold(`${service.name} ${env.name} is out of sync`)
+        );
         // If the file is only remote, just download it
         let bypassPrompt = true;
         for (let k = 0; k < keys.length; k++) {

@@ -27,6 +27,7 @@ class Resource {
       const value = config[key];
       result[formatEnvKey(`${name}_${key}`)] = value;
     }
+    return result;
   }
   configureSelf() {
     const config = this.config;
@@ -37,12 +38,13 @@ class Resource {
       const value = config[key];
       result[formatEnvKey(`${key}`)] = value;
     }
+    return result;
   }
 }
 
 class Repo extends Resource {
   constructor(name, repo, config) {
-    super(name);
+    super(name, config);
     this.repo = repo;
     this.dir = path.join(DIRNAME, this.name);
   }
@@ -117,7 +119,7 @@ class Repo extends Resource {
 
 class Service extends Repo {
   constructor(name, repo, config) {
-    super(name, repo);
+    super(name, repo, config);
     this.local = {
       name: "local",
       secrets: new SecretStore(this.name, "local"),
@@ -171,4 +173,5 @@ class Service extends Repo {
     }
   }
 }
-module.exports = Service;
+
+module.exports = { Service, Repo, Resource };
