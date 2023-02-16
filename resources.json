@@ -2,15 +2,6 @@
   "autocode-api-log-service": {
     "repo": "git@github.com:/poly/autocode-api-log-service"
   },
-  "polybit-api": {
-    "repo": "git@github.com:poly/api-polybit-com",
-    "type": "service",
-    "config": {
-      "port": 3099,
-      "node_env": "proxy",
-      "registry_key": "supersecretkey"
-    }
-  },
   "cache-stdlib-com": {
     "repo": "git@github.com:poly/cache-stdlib-com"
   },
@@ -35,6 +26,18 @@
   "npm-lambda-stdlib-com": {
     "repo": "git@github.com:poly/npm-lambda-stdlib-com"
   },
+  "polybit-api": {
+    "repo": "git@github.com:poly/api-polybit-com",
+    "type": "service",
+    "config": {
+      "port": 3099,
+      "node_env": "proxy",
+      "registry_key": "supersecretkey"
+    }
+  },
+  "stdlib-deploy": {
+    "repo": "git@github.com:poly/stdlib-deploy"
+  },
   "stdlib-registry": {
     "repo": "git@github.com:stdlib/reg2",
     "type": "service",
@@ -42,9 +45,6 @@
       "port": 2639,
       "key": "supersecretkey"
     }
-  },
-  "stdlib-deploy": {
-    "repo": "git@github.com:poly/stdlib-deploy"
   },
   "twitch-api-auth-cache": {
     "repo": "git@github.com:stdlib/twitch-api-auth-cache"
