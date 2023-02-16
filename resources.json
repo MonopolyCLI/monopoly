@@ -8,6 +8,13 @@
   "content": {
     "repo": "git@github.com:stdlib/content"
   },
+  "copenhagen": {
+    "repo": "git@github.com:stdlib/copenhagen-private",
+    "type": "service",
+    "config": {
+      "port": 1337
+    }
+  },
   "discord-voice-clients-stdlib-com": {
     "repo": "git@github.com:/poly/discord-voice-clients-stdlib-com"
   },
