@@ -1,8 +1,8 @@
 {
   "scripts": {
     "prelint:watch": "npm run lint",
-    "lint:watch": "onchange services.json targets.json 'src/**/*' -- prettier --write -u {{file}}",
-    "lint": "prettier --write -u 'src/**/*' services.json targets.json"
+    "lint:watch": "onchange *.json 'src/**/*' -- prettier --write -u {{file}}",
+    "lint": "prettier --write -u 'src/**/*' *.json"
   },
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.266.1",
