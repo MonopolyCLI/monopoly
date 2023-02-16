@@ -89,7 +89,7 @@ class CLI {
 
     // Inject env vars for locally enabled services
     let overrides = {};
-    for (let i = 0; i < services.lenght; i++) {
+    for (let i = 0; i < services.length; i++) {
       overrides = {
         ...overrides,
         ...services[i].configureService(),
@@ -185,7 +185,7 @@ class CLI {
       const envs = [service.local, service.staging, service.prod];
       for (let j = 0; j < envs.length; j++) {
         const env = envs[j];
-        const diff = await env.secrets.diff();
+        const diff = await env.diff();
         if (!diff) {
           console.log(
             chalk.greenBright.bold(`${service.name} ${env.name} is in sync`)
@@ -235,9 +235,9 @@ class CLI {
           continue;
         }
         if (action === "upload") {
-          await env.secrets.upload();
+          await env.upload();
         } else {
-          await env.secrets.download();
+          await env.download();
         }
       }
     }
