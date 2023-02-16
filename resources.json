@@ -3,7 +3,13 @@
     "repo": "git@github.com:/poly/autocode-api-log-service"
   },
   "polybit-api": {
-    "repo": "git@github.com:poly/api-polybit-com"
+    "repo": "git@github.com:poly/api-polybit-com",
+    "type": "service",
+    "config": {
+      "port": 3099,
+      "node_env": "proxy",
+      "registry_key": "supersecretkey"
+    }
   },
   "cache-stdlib-com": {
     "repo": "git@github.com:poly/cache-stdlib-com"
@@ -29,11 +35,12 @@
   "npm-lambda-stdlib-com": {
     "repo": "git@github.com:poly/npm-lambda-stdlib-com"
   },
-  "reg2": {
+  "stdlib-registry": {
     "repo": "git@github.com:stdlib/reg2",
     "type": "service",
     "config": {
-      "port": 2639
+      "port": 2639,
+      "key": "supersecretkey"
     }
   },
   "stdlib-deploy": {
