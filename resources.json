@@ -1,74 +1,57 @@
 {
   "autocode-api-log-service": {
-    "repo": "git@github.com:/poly/autocode-api-log-service",
-    "target": "local"
+    "repo": "git@github.com:/poly/autocode-api-log-service"
   },
-  "api-polybit-com": {
-    "repo": "git@github.com:poly/api-polybit-com",
-    "target": "staging"
+  "polybit-api": {
+    "repo": "git@github.com:poly/api-polybit-com"
   },
   "cache-stdlib-com": {
-    "repo": "git@github.com:poly/cache-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:poly/cache-stdlib-com"
   },
   "content": {
-    "repo": "git@github.com:stdlib/content",
-    "target": "staging"
+    "repo": "git@github.com:stdlib/content"
   },
   "discord-voice-clients-stdlib-com": {
-    "repo": "git@github.com:/poly/discord-voice-clients-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:/poly/discord-voice-clients-stdlib-com"
   },
   "discord-voice-coordinator-stdlib-com": {
-    "repo": "git@github.com:/poly/discord-voice-coordinator-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:/poly/discord-voice-coordinator-stdlib-com"
   },
   "events-scheduler-stdlib-com": {
-    "repo": "git@github.com:poly/events-scheduler-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:poly/events-scheduler-stdlib-com"
   },
   "events-stdlib-com": {
-    "repo": "git@github.com:poly/events-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:poly/events-stdlib-com"
   },
   "f-stdlib-com": {
-    "repo": "git@github.com:poly/f-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:poly/f-stdlib-com"
   },
   "npm-lambda-stdlib-com": {
-    "repo": "git@github.com:poly/npm-lambda-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:poly/npm-lambda-stdlib-com"
   },
   "reg2": {
     "repo": "git@github.com:stdlib/reg2",
-    "target": "staging",
     "type": "service",
     "config": {
       "port": 2639
     }
   },
   "stdlib-deploy": {
-    "repo": "git@github.com:poly/stdlib-deploy",
-    "target": "staging"
+    "repo": "git@github.com:poly/stdlib-deploy"
   },
   "twitch-api-auth-cache": {
-    "repo": "git@github.com:stdlib/twitch-api-auth-cache",
-    "target": "staging"
+    "repo": "git@github.com:stdlib/twitch-api-auth-cache"
   },
   "twitch-hub": {
-    "repo": "git@github.com:poly/twitch-hub",
-    "target": "staging"
+    "repo": "git@github.com:poly/twitch-hub"
   },
   "twitch-spoke": {
-    "repo": "git@github.com:poly/twitch-spoke",
-    "target": "staging"
+    "repo": "git@github.com:poly/twitch-spoke"
   },
   "websocket-dispatcher-client-stdlib-com": {
-    "repo": "git@github.com:poly/websocket-dispatcher-client-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:poly/websocket-dispatcher-client-stdlib-com"
   },
   "websocket-dispatcher-coordinator-stdlib-com": {
-    "repo": "git@github.com:poly/websocket-dispatcher-coordinator-stdlib-com",
-    "target": "staging"
+    "repo": "git@github.com:poly/websocket-dispatcher-coordinator-stdlib-com"
   }
 }
