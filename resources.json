@@ -41,7 +41,11 @@
   },
   "reg2": {
     "repo": "git@github.com:stdlib/reg2",
-    "target": "staging"
+    "target": "staging",
+    "type": "service",
+    "config": {
+      "port": 2639
+    }
   },
   "stdlib-deploy": {
     "repo": "git@github.com:poly/stdlib-deploy",
