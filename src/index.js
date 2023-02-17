@@ -2,7 +2,7 @@ const { Resources } = require("./parsers");
 const chalk = require("chalk");
 const prompts = require("prompts");
 const logger = require("./logger");
-const StdBuff = require("./stdbuff");
+const { StdBuff, FileWriterBuff, FileReaderBuff } = require("./stdbuff");
 const fs = require("fs/promises");
 const path = require("path");
 
@@ -92,13 +92,14 @@ class CLI {
 
     // Start the dev server for each service
     const dev = async (service) => {
-      const buffer = new StdBuff();
-      buffer.on("stdout", (line) => logger.log(line, service.name));
-      buffer.on("stderr", (line) => logger.error(line, service.name));
+      const buffer = new FileWriterBuff(service.name);
+      await buffer.open();
       try {
+        logger.log(`Running`, service.name);
         await service.dev(buffer);
       } catch (e) {
-        logger.error(e.toString());
+        logger.error(e.toString(), service.name);
+        await buffer.close();
         return process.exit(1);
       }
     };
@@ -129,6 +130,38 @@ class CLI {
     const installs = services.map((service) => install(service));
     const results = await Promise.allSettled(installs);
     this.done(results, "Have All Dependencies", "Install Failed");
+  }
+  async logs() {
+    // Ask the user which services they want logs from
+    const choices = services.map((service) => ({
+      title: service.name,
+      value: service.name,
+    }));
+    const input = await prompts({
+      type: "multiselect",
+      name: "names",
+      message: "Which services should we start locally?",
+      choices,
+    });
+
+    // Convert their response into an array of services and
+    // abort if we don't have any work
+    if (!input.hasOwnProperty("names")) {
+      console.error(chalk.yellowBright.bold("No services selected"));
+      process.exit(1);
+    }
+    const enabled = services.filter(
+      (service) => input.names.indexOf(service.name) !== -1
+    );
+
+    // Start the dev server for each service
+    const log = async (service) => {
+      const buffer = new FileReaderBuff(service.name);
+      buffer.on("stdout", (data) => logger.log(data, service.name));
+      buffer.on("stderr", (data) => logger.error(data, service.name));
+    };
+    const devs = enabled.map((service) => log(service));
+    await Promise.all(devs);
   }
   async status() {
     const checkStatus = async (repo) => {
@@ -244,15 +277,12 @@ function help() {
   monopoly - autocode's internal polyrepo orchestrator
 
     clone    makes sure all repositories are cloned
-    install  install node modules for all projects
+    install  run install for all repositories
     status   reports the git status of each repository
     secrets
       sync   reconcile local and remote secrets
-    dev      start all local services
-
-  Configuration Files:
-    ./services.json   Configure the services monopoly manages
-    ./targets.json    Override .env to target remote services
+    dev      start selected services
+    logs     follow logs from selected services
   */
 }
 
@@ -271,6 +301,8 @@ async function main() {
       return cli.install();
     case "dev":
       return cli.dev();
+    case "logs":
+      return cli.logs();
     case "secrets":
       const subcommand = args[0];
       switch (subcommand) {
