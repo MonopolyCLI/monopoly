@@ -1,4 +1,4 @@
-const { Service, Repo, Resource } = require("./service");
+const { Resources } = require("./parsers");
 const chalk = require("chalk");
 const prompts = require("prompts");
 const logger = require("./logger");
@@ -8,60 +8,38 @@ const path = require("path");
 
 // Load in the resource definitions and instantiate them
 const resourceFile = require("../resources.json");
-
-// Resources default to "repo" type
-Object.keys(resourceFile).forEach((name) => {
-  resourceFile[name].type = resourceFile[name].type || "repo";
-});
-
-// Instantiate all resources by type
-const services = Object.keys(resourceFile)
-  .filter((name) => resourceFile[name].type === "service")
-  .map((name) => {
-    const { repo, config } = resourceFile[name];
-    return new Service(name, repo, config || {});
-  });
-const repos = Object.keys(resourceFile)
-  .filter((name) => resourceFile[name].type === "repo")
-  .map((name) => {
-    const { repo, config } = resourceFile[name];
-    return new Repo(name, repo, config || {});
-  });
-const resources = Object.keys(resourceFile)
-  .filter((name) => resourceFile[name].type === "resource")
-  .map((name) => {
-    const { repo, config } = resourceFile[name];
-    return new Resource(name, repo, config || {});
-  });
+const resources = new Resources(resourceFile);
+const services = resources.services();
+const repos = resources.repos();
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
 // around the Service object that handles batching commands.
 class CLI {
   async clone() {
-    const clone = async (service) => {
-      if (await service.exists()) {
+    const clone = async (repo) => {
+      if (await repo.exists()) {
         return; // Short circuit
       }
-      logger.log("git clone", service.name);
+      logger.log("git clone", repo.name);
       const buffer = new StdBuff();
       let msg = [];
       buffer.on("stdout", (line) => msg.push(line));
       buffer.on("stderr", (line) => msg.push(line));
       try {
-        await service.clone(buffer);
-        logger.log("git clone finished", service.name);
+        await repo.clone(buffer);
+        logger.log("git clone finished", repo.name);
       } catch (e) {
         // Only write logs if something goes wrong
         buffer.flush();
-        logger.error(e.toString(), service.name);
+        logger.error(e.toString(), repo.name);
         const log = msg.join("\n");
         if (log.trim() !== "") {
-          logger.error(log, service.name);
+          logger.error(log, repo.name);
         }
-        throw new Error(`${service.name} could not be clone`);
+        throw new Error(`${repo.name} could not be clone`);
       }
     };
-    const clones = [...repos, ...services].map((service) => clone(service));
+    const clones = repos.map((repo) => clone(repo));
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
@@ -80,16 +58,17 @@ class CLI {
 
     // Convert their response into an array of services and
     // abort if we don't have any work
+    if (!input.hasOwnProperty("names")) {
+      console.error(chalk.yellowBright.bold("No services selected"));
+      process.exit(1);
+    }
     const enabled = services.filter(
       (service) => input.names.indexOf(service.name) !== -1
     );
-    if (enabled.length === 0) {
-      console.log(chalk.yellowBright.bold("No services set to local"));
-    }
 
     // Inject env vars for locally enabled services
     let overrides = {};
-    for (let i = 0; i < services.length; i++) {
+    for (let i = 0; i < enabled.length; i++) {
       overrides = {
         ...overrides,
         ...services[i].configureService(),
@@ -152,12 +131,12 @@ class CLI {
     this.done(results, "Have All Dependencies", "Install Failed");
   }
   async status() {
-    const checkStatus = async (service) => {
-      const exists = await service.exists();
+    const checkStatus = async (repo) => {
+      const exists = await repo.exists();
       if (!exists) {
-        return logger.error("Missing repository", service.name);
+        return logger.error("Missing repository", repo.name);
       }
-      const { branch, dirty } = await service.status();
+      const { branch, dirty } = await repo.status();
       let msg = "";
       if (branch === "main" || branch === "master") {
         msg += branch;
@@ -167,16 +146,14 @@ class CLI {
       msg += ": ";
       if (dirty) {
         msg += chalk.yellowBright.bold("dirty");
-        logger.log(msg, service.name);
-        logger.log(dirty, service.name);
+        logger.log(msg, repo.name);
+        logger.log(dirty, repo.name);
       } else {
         msg += "clean";
-        logger.log(msg, service.name);
+        logger.log(msg, repo.name);
       }
     };
-    const checks = [...repos, ...services].map((service) =>
-      checkStatus(service)
-    );
+    const checks = repos.map((service) => checkStatus(service));
     await Promise.all(checks);
   }
   async secretsSync() {

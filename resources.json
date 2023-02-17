@@ -6,13 +6,31 @@
     "repo": "git@github.com:poly/cache-stdlib-com"
   },
   "content": {
-    "repo": "git@github.com:stdlib/content"
+    "repo": "git@github.com:stdlib/content",
+    "services": {
+      "apigen": {
+        "config": { "port": 7002 }
+      },
+      "autocode": {
+        "config": { "port": 8000 }
+      },
+      "docs": {
+        "config": { "port": 9002 }
+      },
+      "metrics": {
+        "config": { "port": 9004 }
+      },
+      "tools": {
+        "config": { "port": 7001 }
+      }
+    }
   },
   "copenhagen": {
     "repo": "git@github.com:stdlib/copenhagen-private",
-    "type": "service",
-    "config": {
-      "port": 1337
+    "service": {
+      "config": {
+        "port": 1337
+      }
     }
   },
   "discord-voice-clients-stdlib-com": {
@@ -35,11 +53,12 @@
   },
   "polybit-api": {
     "repo": "git@github.com:poly/api-polybit-com",
-    "type": "service",
-    "config": {
-      "port": 3099,
-      "node_env": "proxy",
-      "registry_key": "supersecretkey"
+    "service": {
+      "config": {
+        "port": 3099,
+        "node_env": "proxy",
+        "registry_key": "supersecretkey"
+      }
     }
   },
   "stdlib-deploy": {
@@ -47,10 +66,11 @@
   },
   "stdlib-registry": {
     "repo": "git@github.com:stdlib/reg2",
-    "type": "service",
-    "config": {
-      "port": 2639,
-      "key": "supersecretkey"
+    "service": {
+      "config": {
+        "port": 2639,
+        "key": "supersecretkey"
+      }
     }
   },
   "twitch-api-auth-cache": {
