@@ -1,4 +1,4 @@
-const { Resource } = require("./service");
+const { Resource } = require("./resources");
 
 class Resources {
   constructor(definition) {
