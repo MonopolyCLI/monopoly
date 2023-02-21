@@ -1,4 +1,6 @@
 const { Resources } = require("./parsers");
+const { exec } = require('child_process');
+const { once } = require('events')
 const chalk = require("chalk");
 const prompts = require("prompts");
 const logger = require("./logger");
@@ -278,6 +280,7 @@ function help() {
   /*
   monopoly - autocode's internal polyrepo orchestrator
 
+    init     create a monopoly repo
     clone    makes sure all repositories are cloned
     install  run install for all repositories
     status   reports the git status of each repository
@@ -303,11 +306,28 @@ async function loadResourceFile() {
   }
 }
 
+async function init() {
+  // create monopoly.json
+  const file = path.join(process.cwd(), "monopoly.json");
+  try {
+    await fs.stat(file);
+  } catch (e) {
+    await fs.writeFile(file, "{}", "utf-8");
+  }
+  // init git
+  const git = exec('git init')
+  await once(git, 'close');
+  console.log(chalk.greenBright.bold("Created a monopoly repository!"));
+}
+
 // Strip off node and file
 const argv = process.argv.slice(2);
 async function main() {
   const command = argv[0];
   const args = argv.slice(1);
+  if (command === "init") {
+    return init();
+  }
   const cli = new CLI(await loadResourceFile());
   switch (command) {
     case "clone":
