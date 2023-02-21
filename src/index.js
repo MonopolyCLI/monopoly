@@ -159,6 +159,7 @@ class CLI {
       const buffer = new FileReaderBuff(service.name);
       buffer.on("stdout", (data) => logger.log(data, service.name));
       buffer.on("stderr", (data) => logger.error(data, service.name));
+      await buffer.follow();
     };
     const devs = enabled.map((service) => log(service));
     await Promise.all(devs);

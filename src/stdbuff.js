@@ -89,6 +89,17 @@ class FileReaderBuff extends StdBuff {
   constructor(filename) {
     super();
     this.path = path.join(DIRNAME, filename);
+    this.stream = undefined;
+  }
+  async follow() {
+    // Make sure the log file exists that we want to follow
+    // This lets us follow the logs before the service is started
+    try {
+      await fs.stat(this.path);
+    } catch (e) {
+      await fs.mkdir(path.dirname(this.path), { recursive: true });
+      await fs.writeFile(this.path, Buffer.alloc(0), "utf-8");
+    }
     this.stream = new Tail(this.path, {
       fromBeginning: true,
     });
