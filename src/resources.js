@@ -6,7 +6,7 @@ const pexec = promisify(exec);
 const SecretStore = require("./secrets");
 const StdBuff = require("./stdbuff");
 
-const DIRNAME = path.join(__dirname, "..", "repos");
+const DIRNAME = path.join(process.cwd(), "repos");
 
 function formatEnvKey(str) {
   return str.replace(/-/g, "_").replace(/\//g, "_").toUpperCase();

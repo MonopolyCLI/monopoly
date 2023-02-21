@@ -10,7 +10,7 @@ const {
 const client = new SecretsManagerClient({
   region: "us-east-1",
 });
-const envvars = path.join(__dirname, "..", "envfiles");
+const envvars = path.join(process.cwd(), "envfiles");
 
 // Secret store represents a set of remote secrets
 class SecretStore {

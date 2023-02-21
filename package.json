@@ -4,6 +4,9 @@
     "lint:watch": "onchange *.json 'src/**/*' -- prettier --write -u {{file}}",
     "lint": "prettier --write -u 'src/**/*' *.json"
   },
+  "bin": {
+    "mp": "./src/index.js"
+  },
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.266.1",
     "chalk": "^4",

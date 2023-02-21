@@ -7,14 +7,15 @@ const fs = require("fs/promises");
 const path = require("path");
 
 // Load in the resource definitions and instantiate them
-const resourceFile = require("../resources.json");
-const resources = new Resources(resourceFile);
-const services = resources.services();
-const repos = resources.repos();
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
 // around the Service object that handles batching commands.
 class CLI {
+  constructor(resourceFile) {
+    this.resources = new Resources(resourceFile);
+    this.services = this.resources.services();
+    this.repos = this.resources.repos();
+  }
   async clone() {
     const clone = async (repo) => {
       if (await repo.exists()) {
@@ -39,13 +40,13 @@ class CLI {
         throw new Error(`${repo.name} could not be clone`);
       }
     };
-    const clones = repos.map((repo) => clone(repo));
+    const clones = this.repos.map((repo) => clone(repo));
     const results = await Promise.allSettled(clones);
     this.done(results, "Have All Repositories", "Clone Failed");
   }
   async dev() {
     // Ask the user which services they want to run
-    const choices = services.map((service) => ({
+    const choices = this.services.map((service) => ({
       title: service.name,
       value: service.name,
     }));
@@ -62,7 +63,7 @@ class CLI {
       console.error(chalk.yellowBright.bold("No services selected"));
       process.exit(1);
     }
-    const enabled = services.filter(
+    const enabled = this.services.filter(
       (service) => input.names.indexOf(service.name) !== -1
     );
 
@@ -71,7 +72,7 @@ class CLI {
     for (let i = 0; i < enabled.length; i++) {
       overrides = {
         ...overrides,
-        ...services[i].configureService(),
+        ...this.services[i].configureService(),
       };
     }
 
@@ -127,13 +128,13 @@ class CLI {
         throw new Error(`${service.name} failed install`);
       }
     };
-    const installs = services.map((service) => install(service));
+    const installs = this.services.map((service) => install(service));
     const results = await Promise.allSettled(installs);
     this.done(results, "Have All Dependencies", "Install Failed");
   }
   async logs() {
     // Ask the user which services they want logs from
-    const choices = services.map((service) => ({
+    const choices = this.services.map((service) => ({
       title: service.name,
       value: service.name,
     }));
@@ -150,7 +151,7 @@ class CLI {
       console.error(chalk.yellowBright.bold("No services selected"));
       process.exit(1);
     }
-    const enabled = services.filter(
+    const enabled = this.services.filter(
       (service) => input.names.indexOf(service.name) !== -1
     );
 
@@ -187,12 +188,12 @@ class CLI {
         logger.log(msg, repo.name);
       }
     };
-    const checks = repos.map((service) => checkStatus(service));
+    const checks = this.repos.map((service) => checkStatus(service));
     await Promise.all(checks);
   }
   async secretsSync() {
-    for (let i = 0; i < services.length; i++) {
-      const service = services[i];
+    for (let i = 0; i < this.services.length; i++) {
+      const service = this.services[i];
       const envs = [service.local, service.staging, service.prod];
       for (let j = 0; j < envs.length; j++) {
         const env = envs[j];
@@ -287,12 +288,27 @@ function help() {
   */
 }
 
+// Ensure we are running in a monopoly directory
+async function loadResourceFile() {
+  const file = path.join(process.cwd(), "monopoly.json");
+  try {
+    return await fs.readFile(file, "utf-8");
+  } catch (e) {
+    console.error(
+      chalk.redBright.bold(
+        "Monopoly must be run in a directory containing monopoly.json"
+      )
+    );
+    process.exit(1);
+  }
+}
+
 // Strip off node and file
 const argv = process.argv.slice(2);
 async function main() {
   const command = argv[0];
   const args = argv.slice(1);
-  const cli = new CLI();
+  const cli = new CLI(await loadResourceFile());
   switch (command) {
     case "clone":
       return cli.clone();

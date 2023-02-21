@@ -5,7 +5,7 @@ const path = require("path");
 const { createWriteStream, createReadStream } = require("fs");
 const { Tail } = require("tail");
 
-const DIRNAME = path.join(__dirname, "..", "logs");
+const DIRNAME = path.join(process.cwd(), "logs");
 
 // Handles chunking stdout/stderr by line for pretty printing
 class StdBuff extends EventEmitter {
