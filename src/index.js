@@ -8,6 +8,8 @@ const { StdBuff, FileWriterBuff, FileReaderBuff } = require("./stdbuff");
 const fs = require("fs/promises");
 const path = require("path");
 
+const { Listr } = require("listr2");
+
 // Load in the resource definitions and instantiate them
 
 // The CLI object's async classes map 1:1 with commands. It's just a wrapper
@@ -23,28 +25,38 @@ class CLI {
       if (await repo.exists()) {
         return; // Short circuit
       }
-      logger.log("git clone", repo.name);
       const buffer = new StdBuff();
       let msg = [];
       buffer.on("stdout", (line) => msg.push(line));
       buffer.on("stderr", (line) => msg.push(line));
       try {
         await repo.clone(buffer);
-        logger.log("git clone finished", repo.name);
       } catch (e) {
-        // Only write logs if something goes wrong
         buffer.flush();
-        logger.error(e.toString(), repo.name);
-        const log = msg.join("\n");
-        if (log.trim() !== "") {
-          logger.error(log, repo.name);
-        }
-        throw new Error(`${repo.name} could not be clone`);
+        e.stdio = msg.join("\n");
+        throw e;
       }
     };
-    const clones = this.repos.map((repo) => clone(repo));
-    const results = await Promise.allSettled(clones);
-    this.done(results, "Have All Repositories", "Clone Failed");
+    const clones = this.repos.map((repo) => ({
+      title: `Cloning ${repo.name}...`,
+      task: async (_, task) => {
+        try {
+          await clone(repo);
+        } catch (e) {
+          task.title = `Cloning ${repo.name}... Failed`;
+          task.stdout().write(e.stdio);
+          throw new Error(`Cloning ${repo.name}... ${e.message}`);
+        }
+        task.title = `Cloning ${repo.name}... Done!`;
+      },
+      options: {
+        persistentOutput: true,
+      },
+    }));
+    await new Listr(clones, {
+      concurrent: true,
+      exitOnError: false,
+    }).run();
   }
   async dev() {
     // Ask the user which services they want to run
