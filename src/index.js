@@ -1,6 +1,6 @@
 const { Resources } = require("./parsers");
-const { exec } = require('child_process');
-const { once } = require('events')
+const { exec } = require("child_process");
+const { once } = require("events");
 const chalk = require("chalk");
 const prompts = require("prompts");
 const logger = require("./logger");
@@ -327,8 +327,8 @@ async function init() {
     await fs.writeFile(file, "{}", "utf-8");
   }
   // init git
-  const git = exec('git init')
-  await once(git, 'close');
+  const git = exec("git init");
+  await once(git, "close");
   console.log(chalk.greenBright.bold("Created a monopoly repository!"));
 }
 
