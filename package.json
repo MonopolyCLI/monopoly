@@ -1,11 +1,12 @@
 {
+  "name": "@monopolycli/monopoly",
   "scripts": {
     "prelint:watch": "npm run lint",
     "lint:watch": "onchange *.json 'src/**/*' -- prettier --write -u {{file}}",
     "lint": "prettier --write -u 'src/**/*' *.json"
   },
   "bin": {
-    "mp": "./src/index.js"
+    "monopoly": "./src/index.js"
   },
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.266.1",
