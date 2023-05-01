@@ -3,7 +3,6 @@ const { exec, spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs/promises");
 const pexec = promisify(exec);
-const SecretStore = require("./secrets");
 const StdBuff = require("./stdbuff");
 
 const DIRNAME = path.join(process.cwd(), "repos");
@@ -109,11 +108,6 @@ class Service {
       this.config["HOST"] = this.config["HOST"] || "127.0.0.1";
       this.config["NODE_ENV"] = this.config["NODE_ENV"] || "development";
     }
-
-    // Setup secrets for each env
-    this.local = new SecretStore(this.name, "local");
-    this.staging = new SecretStore(this.name, "staging");
-    this.prod = new SecretStore(this.name, "prod");
   }
   async dev(buffer) {
     if (this.commands.dev === null) {
@@ -140,34 +134,6 @@ class Service {
       opts.cwd = this.dir;
     }
     await command(cmd, args, opts, buffer);
-  }
-  // Get env file for other services
-  configureService() {
-    const config = this.config;
-    const name = this.name;
-    const keys = Object.keys(config);
-    const result = {};
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key === "NODE_ENV") {
-        continue; // Skip node_env for other services
-      }
-      const value = config[key];
-      result[formatEnvKey(`${name}_${key}`)] = value;
-    }
-    return result;
-  }
-  // Get env file for self
-  configureSelf() {
-    const config = this.config;
-    const keys = Object.keys(config);
-    const result = {};
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      const value = config[key];
-      result[formatEnvKey(`${key}`)] = value;
-    }
-    return result;
   }
   async hasDir() {
     try {

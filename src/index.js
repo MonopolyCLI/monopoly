@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { Resources } = require("./parsers");
 const { exec } = require("child_process");
 const { once } = require("events");
@@ -80,30 +81,6 @@ class CLI {
     const enabled = this.services.filter(
       (service) => input.names.indexOf(service.name) !== -1
     );
-
-    // Inject env vars for locally enabled services
-    let overrides = {};
-    for (let i = 0; i < enabled.length; i++) {
-      overrides = {
-        ...overrides,
-        ...this.services[i].configureService(),
-      };
-    }
-
-    // Create env files for each local service with injected variables
-    const envs = enabled.map(async (service) => {
-      logger.log("generating .env", service.name);
-      const vars = {
-        ...(await service.local.vars()),
-        ...overrides,
-        ...service.configureSelf(),
-      };
-      const env = [];
-      Object.keys(vars).forEach((key) => env.push(`${key}=${vars[key]}`));
-      const filename = path.join(service.dir, ".env");
-      fs.writeFile(filename, env.join("\n"), "utf-8");
-    });
-    await Promise.all(envs);
 
     // Start the dev server for each service
     const dev = async (service) => {
@@ -205,69 +182,6 @@ class CLI {
     const checks = this.repos.map((service) => checkStatus(service));
     await Promise.all(checks);
   }
-  async secretsSync() {
-    for (let i = 0; i < this.services.length; i++) {
-      const service = this.services[i];
-      const envs = [service.local, service.staging, service.prod];
-      for (let j = 0; j < envs.length; j++) {
-        const env = envs[j];
-        const diff = await env.diff();
-        if (!diff) {
-          console.log(
-            chalk.greenBright.bold(`${service.name} ${env.name} is in sync`)
-          );
-          continue;
-        }
-        const keys = Object.keys(diff);
-        console.log(
-          chalk.redBright.bold(`${service.name} ${env.name} is out of sync`)
-        );
-        // If the file is only remote, just download it
-        let bypassPrompt = true;
-        for (let k = 0; k < keys.length; k++) {
-          let key = keys[k];
-          let state = diff[key];
-          if (state === "modified") {
-            bypassPrompt = false;
-            console.log(chalk.green(key), "has been modified");
-          } else if (state === "local") {
-            bypassPrompt = false;
-            console.log(chalk.green(key), `is only ${state}`);
-          } else if (state === "remote") {
-            console.log(chalk.green(key), `is only ${state}`);
-          }
-        }
-
-        let action;
-        if (bypassPrompt) {
-          action = "download";
-        } else {
-          const input = await prompts({
-            type: "select",
-            name: "action",
-            message: "How should we resolve this?",
-            choices: [
-              { title: "Replace remote copy with local copy", value: "upload" },
-              {
-                title: "Replace local copy with remote copy",
-                value: "download",
-              },
-            ],
-          });
-          action = input.action;
-        }
-        if (!action) {
-          console.log(chalk.yellow.bold("WARN: Taking no action"));
-          continue;
-        }
-        if (action === "upload") {
-          await env.upload();
-        } else {
-          await env.download();
-        }
-      }
-    }
-  }
   done(results, success, error) {
     const rejected = results.filter((promise) => promise.status === "rejected");
     if (rejected.length > 0) {
@@ -296,8 +210,6 @@ function help() {
     clone    makes sure all repositories are cloned
     install  run install for all repositories
     status   reports the git status of each repository
-    secrets
-      sync   reconcile local and remote secrets
     dev      start selected services
     logs     follow logs from selected services
   */
@@ -352,12 +264,6 @@ async function main() {
       return cli.dev();
     case "logs":
       return cli.logs();
-    case "secrets":
-      const subcommand = args[0];
-      switch (subcommand) {
-        case "sync":
-          return cli.secretsSync();
-      }
     default:
       return console.log(help.toString().split("\n").slice(2, -2).join("\n"));
       const { repo, config } = resourceFile[name];
