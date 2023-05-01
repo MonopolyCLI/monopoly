@@ -9,13 +9,14 @@
   "bin": {
     "monopoly": "./src/index.js"
   },
-  "devDependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.266.1",
+  "dependencies": {
     "chalk": "^4",
     "listr2": "^5.0.7",
-    "onchange": "^7.1.0",
-    "prettier": "^2.8.1",
     "prompts": "^2.4.2",
     "tail": "^2.2.6"
+  },
+  "devDependencies": {
+    "onchange": "^7.1.0",
+    "prettier": "^2.8.1"
   }
 }
